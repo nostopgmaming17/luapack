@@ -137,10 +137,24 @@ local %s = setmetatable({}, {
                     })
                 end
             elseif type(v) == "table" or type(v) == "userdata" then
-                local mt = getmetatable(v)
-                setmetatable(b,v)
-                for i, j in next, v do
+                for i,_ in next, b do
+                    b[i] = nil
+                end
+                for i,j in next, v do
                     b[i] = j
+                end
+                local mt = {}
+                local _mt = getmetatable(v)
+                if _mt then
+                    for i,j in next, _mt do
+                        mt[i] = j
+                    end
+                end
+                mt.__index = function(self,k)
+                    return v[k]
+                end
+                mt.__newindex = function(self,k,V)
+                    v[k] = V
                 end
             end
         end
