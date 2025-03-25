@@ -122,26 +122,29 @@ local %s = setmetatable({}, {
         if b == nil then
             return rawset(_%s, k, v)
         end
-        if type(v) == "function" then
-            local mt = getmetatable(b)
-            if mt then
-                mt.__call = function(self,...)
-                    return v(...)
-                end
-            else
-                setmetatable(b, {
-                    __call = function(self,...)
+        if type(b) == "table" or type(b) == "userdata" then
+            if type(v) == "function" then
+                local mt = getmetatable(b)
+                if mt then
+                    mt.__call = function(self,...)
                         return v(...)
                     end
-                })
-            end
-        else
-            local mt = getmetatable(v)
-            setmetatable(b,v)
-            for i, j in next, v do
-                b[i] = j
+                else
+                    setmetatable(b, {
+                        __call = function(self,...)
+                            return v(...)
+                        end
+                    })
+                end
+            elseif type(v) == "table" or type(v) == "userdata"
+                local mt = getmetatable(v)
+                setmetatable(b,v)
+                for i, j in next, v do
+                    b[i] = j
+                end
             end
         end
+        rawset(t, k, v)
     end
 })
 ]], modulesTable, modulesTable, modulesTable, modulesTable, modulesTable)
