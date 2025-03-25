@@ -136,7 +136,7 @@ local %s = setmetatable({}, {
                         end
                     })
                 end
-            elseif type(v) == "table" or type(v) == "userdata"
+            elseif type(v) == "table" or type(v) == "userdata" then
                 local mt = getmetatable(v)
                 setmetatable(b,v)
                 for i, j in next, v do
@@ -144,10 +144,10 @@ local %s = setmetatable({}, {
                 end
             end
         end
-        rawset(t, k, v)
+        rawset(_%s, k, v)
     end
 })
-]], modulesTable, modulesTable, modulesTable, modulesTable, modulesTable)
+]], modulesTable, modulesTable, modulesTable, modulesTable, modulesTable, modulesTable)
 
         -- Pre-initialize modules to break circular references
         for module, index in pairs(moduleCache) do
