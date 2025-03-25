@@ -209,7 +209,6 @@ local Scope = {
                 for i = 1, #id do
                     ID = ID .. joint:sub(id[i], id[i])
                 end
-				print(ID)
             end
 			--[[
             repeat
