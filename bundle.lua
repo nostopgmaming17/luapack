@@ -110,9 +110,8 @@ function Bundler.bundle(inputCode, first, parentModule, currentPath, moduleCache
     -- Rest of the bundling logic (module initialization) remains the same as previous implementation
     if first then
         local moduleInitCode = string.format([[
-local _%s = {}
 local %s = {}
-]], modulesTable, modulesTable)
+]], modulesTable)
 
         -- Initialize modules with their actual content
         for module, index in pairs(moduleCache) do
@@ -122,16 +121,12 @@ do
         %s
     end
     %s[%d] = function()
-        if _%s[%d] == nil then
-            local ret = module()
-            _%s[%d] = ret ~= nil and ret or true
-            return ret
-        else
-            return _%s[%d]
-        end
+        local ret = module()
+        %s[%d] = function() return ret end
+        return ret
     end
 end
-]], moduleFileCache[module], modulesTable, index, modulesTable, index, modulesTable, index, modulesTable, index)
+]], moduleFileCache[module], modulesTable, index, modulesTable, index)
         end
 
         code = moduleInitCode .. code
