@@ -6,7 +6,11 @@
 -- (even assigning nil will do) in a main chunk before being used
 -- anywhere or assigned to inside a function.
 --
-
+if "%BUNDLED%" == "true" then
+  __STRICT = true
+  function global() end
+  return
+end
 local mt = getmetatable(_G)
 if mt == nil then
   mt = {}

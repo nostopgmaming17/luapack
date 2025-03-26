@@ -82,6 +82,9 @@ function Bundler.bundle(inputCode, first, parentModule, currentPath, moduleCache
         code = code:gsub('require%s*[%(%s]*([%\'"%[])(.-)%1[%)%s]*', function(quote, module)
             return replaceRequire(module)
         end)
+        code = code:gsub('%%BUNDLED%%', function()
+            return "true"
+        end)
 
         return code
     end
@@ -121,7 +124,7 @@ do
     %s[%d] = function()
         if _%s[%d] == nil then
             local ret = module()
-            _%s[%d] = ret
+            _%s[%d] = ret ~= nil and ret or true
             return ret
         else
             return _%s[%d]
