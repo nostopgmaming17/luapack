@@ -1,6 +1,6 @@
 -- made by me and claudeai
 -- Lua Bundler and Minifier
--- local minify = require "minify"
+
 local Parser = require "ParseLua"
 local Format_Mini = require "FormatMini"
 local ParseLua = Parser.ParseLua
@@ -76,11 +76,10 @@ function Bundler.bundle(inputCode, first, parentModule, currentPath, moduleCache
                 table.insert(circularRefs[parentModule], module)
             end
 
-            return modulesTable .. "[" .. varName .. "]"
+            return modulesTable .. "[" .. varName .. "]()"
         end
 
-        code = code:gsub('require%s*%b""', function(match)
-            local module = match:match('"(.+)"')
+        code = code:gsub('require%s*[%(%s]*([%\'"%[])(.-)%1[%)%s]*', function(quote, module)
             return replaceRequire(module)
         end)
 
@@ -109,64 +108,8 @@ function Bundler.bundle(inputCode, first, parentModule, currentPath, moduleCache
     if first then
         local moduleInitCode = string.format([[
 local _%s = {}
-local %s = setmetatable({}, {
-    __index = function(t, k)
-        local mod = rawget(_%s, k)
-        if mod == nil then
-            error("Module not found: " .. tostring(k))
-        end
-        return mod
-    end;
-    __newindex = function(t, k, v)
-        local b = rawget(_%s, k)
-        if b == nil then
-            return rawset(_%s, k, v)
-        end
-        if type(b) == "table" or type(b) == "userdata" then
-            if type(v) == "function" then
-                local mt = getmetatable(b)
-                if mt then
-                    mt.__call = function(self,...)
-                        return v(...)
-                    end
-                else
-                    setmetatable(b, {
-                        __call = function(self,...)
-                            return v(...)
-                        end
-                    })
-                end
-            elseif type(v) == "table" or type(v) == "userdata" then
-                for i,_ in next, b do
-                    b[i] = nil
-                end
-                for i,j in next, v do
-                    b[i] = j
-                end
-                local mt = {}
-                local _mt = getmetatable(v)
-                if _mt then
-                    for i,j in next, _mt do
-                        mt[i] = j
-                    end
-                end
-                mt.__index = function(self,k)
-                    return v[k]
-                end
-                mt.__newindex = function(self,k,V)
-                    v[k] = V
-                end
-            end
-        end
-        rawset(_%s, k, v)
-    end
-})
-]], modulesTable, modulesTable, modulesTable, modulesTable, modulesTable, modulesTable)
-
-        -- Pre-initialize modules to break circular references
-        for module, index in pairs(moduleCache) do
-            moduleInitCode = moduleInitCode .. string.format("%s[%d] = {}\n", modulesTable, index)
-        end
+local %s = {}
+]], modulesTable, modulesTable)
 
         -- Initialize modules with their actual content
         for module, index in pairs(moduleCache) do
@@ -175,9 +118,17 @@ do
     local module = function()
         %s
     end
-    %s[%d] = module()
+    %s[%d] = function()
+        if _%s[%d] == nil then
+            local ret = module()
+            _%s[%d] = ret
+            return ret
+        else
+            return _%s[%d]
+        end
+    end
 end
-]], moduleFileCache[module], modulesTable, index)
+]], moduleFileCache[module], modulesTable, index, modulesTable, index, modulesTable, index, modulesTable, index)
         end
 
         code = moduleInitCode .. code
