@@ -49,6 +49,11 @@ end
 
 function Bundler.bundle(inputCode, first, parentModule, currentPath, moduleCache, moduleFileCache, modulesTable, cnt,
     define)
+    for i, v in next, define do
+        inputCode = inputCode:gsub(i, function()
+            return v
+        end)
+    end
     inputCode = Bundler.minifyLua(inputCode);
     first = first or first == nil
     parentModule = parentModule or nil
@@ -83,14 +88,6 @@ function Bundler.bundle(inputCode, first, parentModule, currentPath, moduleCache
         code = code:gsub('require%s*[%(%s]*([%\'"%[])(.-)%1[%)%s]*', function(quote, module)
             return replaceRequire(module)
         end)
-        code = code:gsub('%%BUNDLED%%', function()
-            return "true"
-        end)
-        for i, v in next, define do
-            code = code:gsub("%%" .. i .. "%%", function()
-                return v
-            end)
-        end
 
         return code
     end
@@ -239,7 +236,7 @@ for i = 2, #args - 1 do
         output = args[i + 1]
         i = i + 1
     elseif args[i]:lower() == "-d" then
-        local var, val = args[i + 1]:match("(%w+)%s*=%s*([^%s]+)")
+        local var, val = args[i + 1]:match("(%w+)%s*=%s*(.-)%s*$")
         if type(var) == "string" and type(val) == "string" then
             define[var] = val
         end
