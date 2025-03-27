@@ -49,6 +49,7 @@ local function readFile(path, baseDir)
 end
 
 function Bundler.bundle(inputCode, first, parentModule, currentPath, moduleCache, moduleFileCache, modulesTable, cnt)
+    inputCode = Bundler.minifyLua(inputCode);
     first = first or first == nil
     parentModule = parentModule or nil
 
