@@ -1,6 +1,5 @@
 -- made by me and claudeai
 -- Lua Bundler and Minifier
-
 local Parser = require "ParseLua"
 local Format_Mini = require "FormatMini"
 local ParseLua = Parser.ParseLua
@@ -48,7 +47,8 @@ local function readFile(path, baseDir)
     return nil
 end
 
-function Bundler.bundle(inputCode, first, parentModule, currentPath, moduleCache, moduleFileCache, modulesTable, cnt)
+function Bundler.bundle(inputCode, first, parentModule, currentPath, moduleCache, moduleFileCache, modulesTable, cnt,
+    define)
     inputCode = Bundler.minifyLua(inputCode);
     first = first or first == nil
     parentModule = parentModule or nil
@@ -86,6 +86,11 @@ function Bundler.bundle(inputCode, first, parentModule, currentPath, moduleCache
         code = code:gsub('%%BUNDLED%%', function()
             return "true"
         end)
+        for i, v in next, define do
+            code = code:gsub("%%" .. i .. "%%", function()
+                return v
+            end)
+        end
 
         return code
     end
@@ -100,7 +105,7 @@ function Bundler.bundle(inputCode, first, parentModule, currentPath, moduleCache
             if moduleContent then
                 moduleFileCache[module] = moduleContent
                 local bundled = Bundler.bundle(moduleContent, false, module, currentPath, moduleCache, moduleFileCache,
-                    modulesTable, cnt)
+                    modulesTable, cnt, define)
                 moduleFileCache[module] = bundled
             else
                 print("WARNING: Failed to read module " .. module)
@@ -177,7 +182,7 @@ function Bundler.writeFile(path, content)
     return true
 end
 
-function Bundler.main(inputFile, outputFile)
+function Bundler.main(inputFile, outputFile, define)
     inputFile = inputFile or "main.lua"
     outputFile = outputFile or "bundled.min.lua"
 
@@ -189,7 +194,7 @@ function Bundler.main(inputFile, outputFile)
     end
 
     -- Bundle the code, passing the full input path
-    local bundledCode = Bundler.bundle(inputCode, true, nil, getDirectory(inputPath))
+    local bundledCode = Bundler.bundle(inputCode, true, nil, getDirectory(inputPath), nil, nil, nil, nil, define)
 
     -- Minify the bundled code
     local minifiedCode = Bundler.minifyLua(bundledCode)
@@ -226,10 +231,19 @@ do
 end
 
 local output = fname .. ".min.lua"
+
+local define = {}
+
 for i = 2, #args - 1 do
     if args[i]:lower() == "-o" then
         output = args[i + 1]
+        i = i + 1
+    elseif args[i]:lower() == "-d" then
+        local var, val = args[i + 1]:match("(%w+)%s*=%s*([^%s]+)")
+        if type(var) == "string" and type(val) == "string" then
+            define[var] = val
+        end
     end
 end
 
-Bundler.main(entrypoint, output)
+Bundler.main(entrypoint, output, define)
