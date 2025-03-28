@@ -68,7 +68,7 @@ function Bundler.bundle(inputCode, first, parentModule, currentPath, moduleCache
         local function replaceRequire(module)
             local file
             local success ,_ = pcall(function()
-                file = io.open(currentPath .. module, "r") or io.open(currentPath .. module .. ".lua", "r") or io.open(currentPath .. module .. "luau", "r")
+                file = io.open(currentPath .. module, "r") or io.open(currentPath .. module .. ".lua", "r") or io.open(currentPath .. module .. ".luau", "r")
             end)
             if not success or not file then
                 return ("require\"%s\""):format(module)
