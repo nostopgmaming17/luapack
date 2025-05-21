@@ -194,6 +194,8 @@ function Bundler.main(inputFile, outputFile, define)
     end
 
     -- Bundle the code, passing the full input path
+    inputCode = Bundler.minifyLua(inputCode)
+    
     local bundledCode = Bundler.bundle(inputCode, true, nil, getDirectory(inputPath), nil, nil, nil, nil, define)
 
     -- Minify the bundled code
