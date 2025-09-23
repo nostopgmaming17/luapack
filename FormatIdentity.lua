@@ -278,6 +278,11 @@ local function Format_Identity(ast)
 				end
 			end
 
+		elseif statement.AstType == 'SpecialAssignmentStatement' then
+			formatExpr(statement.Lhs)
+            appendNextToken(statement.Operator.."=")
+			formatExpr(statement.Rhs)
+
 		elseif statement.AstType == 'CallStatement' then
 			formatExpr(statement.Expression)
 
@@ -331,6 +336,8 @@ local function Format_Identity(ast)
 				formatExpr(statement.Arguments[i])
 				appendComma( i ~= #statement.Arguments )
 			end
+		elseif statement.AstType == 'ContinueStatement' then
+			appendNextToken("continue")
 
 		elseif statement.AstType == 'BreakStatement' then
 			appendNextToken( "break" )

@@ -204,6 +204,11 @@ local function Format_Mini(ast)
                     end
                 end
             end
+        
+        elseif statement.AstType == 'SpecialAssignmentStatement' then
+            out = out .. formatExpr(statement.Lhs)
+            out = out .. statement.Operator
+            out = out .. formatExpr(statement.Rhs)
 
         elseif statement.AstType == 'CallStatement' then
             out = formatExpr(statement.Expression)
@@ -262,6 +267,9 @@ local function Format_Mini(ast)
                     out = out .. ","
                 end
             end
+        
+        elseif statement.AstType == 'ContinueStatement' then
+            out = "continue"
 
         elseif statement.AstType == 'BreakStatement' then
             out = "break"

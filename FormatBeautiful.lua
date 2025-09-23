@@ -180,6 +180,11 @@ local function Format_Beautify(ast)
 					end
 				end
 			end
+		elseif statement.AstType == 'SpecialAssignemntStatement' then
+			out = getIndentation()
+			out = out .. formatExpr(statement.Lhs)
+            out = out .. statement.Operator
+            out = out .. formatExpr(statement.Rhs)
 		elseif statement.AstType == 'CallStatement' then
 			out = getIndentation() .. formatExpr(statement.Expression)
 		elseif statement.AstType == 'LocalStatement' then
@@ -240,6 +245,8 @@ local function Format_Beautify(ast)
 					out = out..", "
 				end
 			end
+		elseif statement.AstType == 'ContinueStatement' then
+			out = getIndentation() .. "continue"
 		elseif statement.AstType == 'BreakStatement' then
 			out = getIndentation() .. "break"
 		elseif statement.AstType == 'RepeatStatement' then

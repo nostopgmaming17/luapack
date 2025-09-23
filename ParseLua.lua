@@ -25,11 +25,11 @@ local Digits = lookupify{'0', '1', '2', '3', '4', '5', '6', '7', '8', '9'}
 local HexDigits = lookupify{'0', '1', '2', '3', '4', '5', '6', '7', '8', '9',
 							'A', 'a', 'B', 'b', 'C', 'c', 'D', 'd', 'E', 'e', 'F', 'f'}
 
-local Symbols = lookupify{'+', '-', '*', '/', '^', '%', ',', '{', '}', '[', ']', '(', ')', ';', '#'}
+local Symbols = lookupify{',', '{', '}', '[', ']', '(', ')', ';', '#'}
 local Scope = require'Scope'
 
 local Keywords = lookupify{
-	'and', 'break', 'do', 'else', 'elseif',
+	'and', 'continue', 'break', 'do', 'else', 'elseif',
 	'end', 'false', 'for', 'function', 'goto', 'if',
 	'in', 'local', 'nil', 'not', 'or', 'repeat',
 	'return', 'then', 'true', 'until', 'while',
@@ -349,6 +349,15 @@ local function LexLua(src)
 					toEmit = {Type = 'Symbol', Data = '::'}
 				else
 					toEmit = {Type = 'Symbol', Data = ':'}
+				end
+
+			elseif c == '+' or c == '-' or c == '*' or c == '/' or c == '%' or c == '^' then
+				local op = get()
+				if peek() == '=' then
+					get()
+					toEmit = {Type = 'Symbol', Data = op .. '='}
+				else
+					toEmit = {Type = 'Symbol', Data = op}
 				end
 
 			elseif Symbols[c] then
@@ -926,6 +935,7 @@ local function ParseLua(src)
 
 
 	local unops = lookupify{'-', 'not', '#'}
+	local SpecialAssignmentOperators = lookupify{'+=', '-=', '*=', '/=', '%=', '^='}
 	local unopprio = 8
 	local priority = {
 		['+'] = {6,6};
@@ -1282,6 +1292,12 @@ local function ParseLua(src)
 			nodeReturn.Arguments = exList
 			nodeReturn.Tokens    = tokenList
 			stat = nodeReturn
+		
+		elseif tok:ConsumeKeyword('continue', tokenList) then
+			local nodeContinue = {}
+			nodeContinue.AstType = 'ContinueStatement'
+			nodeContinue.Tokens = tokenList
+			stat = nodeContinue
 
 		elseif tok:ConsumeKeyword('break', tokenList) then
 			local nodeBreak = {}
@@ -1306,7 +1322,25 @@ local function ParseLua(src)
 			if not st then return false, suffixed end
 
 			--assignment or call?
-			if tok:IsSymbol(',') or tok:IsSymbol('=') then
+			local peeked = tok:Peek()
+			if SpecialAssignmentOperators[peeked.Data] then
+				local operator = tok:Get(tokenList).Data
+
+				if (suffixed.ParenCount or 0) > 0 then
+					return false, GenerateError("Cannot assign to a parenthesized expression.")
+				end
+
+				local st_rhs, rhs = ParseExpr(scope)
+				if not st_rhs then return false, rhs end
+
+				local nodeSpecialAssign = {}
+				nodeSpecialAssign.AstType = 'SpecialAssignmentStatement'
+				nodeSpecialAssign.Lhs = suffixed
+				nodeSpecialAssign.Operator = operator
+				nodeSpecialAssign.Rhs = rhs
+				nodeSpecialAssign.Tokens = tokenList
+				stat = nodeSpecialAssign
+			elseif tok:IsSymbol(',') or tok:IsSymbol('=') then
 				--check that it was not parenthesized, making it not an lvalue
 				if (suffixed.ParenCount or 0) > 0 then
 					return false, GenerateError("Can not assign to parenthesized expression, is not an lvalue")
