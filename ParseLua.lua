@@ -1,4 +1,3 @@
-
 --
 -- ParseLua.lua
 --
@@ -928,6 +927,33 @@ local function ParseLua(src)
 			func.IsLocal = true
 			return true, func
 
+		elseif tok:ConsumeKeyword('if', tokenList) then
+			local st_cond, cond_expr = ParseExpr(scope)
+			if not st_cond then return false, cond_expr end
+
+			if not tok:ConsumeKeyword('then', tokenList) then
+				return false, GenerateError("`then` expected in if-expression")
+			end
+
+			local st_true, true_expr = ParseExpr(scope)
+			if not st_true then return false, true_expr end
+
+			if not tok:ConsumeKeyword('else', tokenList) then
+				return false, GenerateError("`else` expected in if-expression")
+			end
+
+			local st_false, false_expr = ParseExpr(scope)
+			if not st_false then return false, false_expr end
+
+			local nodeIfExpr = {}
+			nodeIfExpr.AstType = 'IfExpression'
+			nodeIfExpr.Condition = cond_expr
+			nodeIfExpr.TrueExpression = true_expr
+			nodeIfExpr.FalseExpression = false_expr
+			nodeIfExpr.Tokens = tokenList
+
+			return true, nodeIfExpr
+
 		else
 			return ParseSuffixedExpr(scope)
 		end
@@ -1442,4 +1468,3 @@ local function ParseLua(src)
 end
 
 return { LexLua = LexLua, ParseLua = ParseLua }
-	

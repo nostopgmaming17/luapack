@@ -36,7 +36,6 @@ local function Format_Mini(ast)
                 -- bb is a symbol, can join without sep
                 return a .. b
             elseif bb == '(' then
-                print("==============>>>", aa, bb)
                 -- prevent ambiguous syntax
                 return a .. sep .. b
             else
@@ -170,6 +169,12 @@ local function Format_Mini(ast)
                 end
             end
             out = out .. "}"
+
+        elseif expr.AstType == 'IfExpression' then
+            local condition = formatExpr(expr.Condition)
+            local trueExpr = formatExpr(expr.TrueExpression)
+            local falseExpr = formatExpr(expr.FalseExpression)
+            out = "(if " .. condition .. " then " .. trueExpr .. " else " .. falseExpr .. ")"
 
         elseif expr.AstType == 'Parentheses' then
             out = out .. "(" .. formatExpr(expr.Inner) .. ")"

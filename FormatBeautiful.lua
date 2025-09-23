@@ -136,6 +136,8 @@ local function Format_Beautify(ast)
 			out = joinStatementsSafe(out, formatStatlist(expr.Body))
 			indent = indent - 1
 			out = joinStatementsSafe(out, getIndentation() .. "end")
+		elseif expr.AstType == 'IfExpression' then
+			out = out .. "if " .. formatExpr(expr.Condition) .. " then " .. formatExpr(expr.TrueExpression) .. " else " .. formatExpr(expr.FalseExpression)
 		elseif expr.AstType == 'ConstructorExpr' then
 			out = out.."{ "
 			for i = 1, #expr.EntryList do

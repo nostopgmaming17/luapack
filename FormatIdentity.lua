@@ -195,6 +195,14 @@ local function Format_Identity(ast)
 			appendNextToken(")")
 			formatStatlist(expr.Body)
 			appendNextToken("end")
+		
+		elseif expr.AstType == 'IfExpression' then
+			appendNextToken( "if" )
+			formatExpr(expr.Condition)
+			appendNextToken( "then" )
+			formatExpr(expr.TrueExpression)
+			appendNextToken( "else" )
+			formatExpr(expr.FalseExpression)
 
 		elseif expr.AstType == 'ConstructorExpr' then
 			appendNextToken( "{" )
