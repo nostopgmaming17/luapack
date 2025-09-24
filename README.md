@@ -1,4 +1,4 @@
-# Lua Packer
+# Luapack - Lua project bundler
 a lua bundler and minifier fully coded in lua
 designed for simplicity, lightweight usage and ease of use
 
