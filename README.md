@@ -5,7 +5,6 @@ designed for simplicity, lightweight usage and ease of use
 a simple straightforward application to bundle many lua files together into one
 
 this packer automatically translate require calls to include the files
-the require calls cannot be something like require("something.dependacy") instead it has to be require("something/dependacy")
 
 you can use this by copying dist/bundle.lua or downloading/cloning the github and running either minifybundle.bat or `lua bundle.lua bundle.lua`
 
