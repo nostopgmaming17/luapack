@@ -1,5 +1,9 @@
 # Lua Packer
 a lua bundler and minifier fully coded in lua
+designed for simplicity, lightweight usage and ease of use
+
+a simple straightforward application to bundle many lua files together into one
+
 this packer automatically translate require calls to include the files
 the require calls cannot be something like require("something.dependacy") instead it has to be require("something/dependacy")
 
