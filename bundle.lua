@@ -33,7 +33,15 @@ local function readFile(path, baseDir)
     -- Ensure baseDir ends with a slash
     baseDir = baseDir and (baseDir:match("/$") and baseDir or baseDir .. "/") or ""
 
-    local pathVariations = {path, baseDir .. path, baseDir .. path .. ".lua", baseDir .. path .. ".luau"}
+    local pathVariations = {
+        path,
+        baseDir .. path,
+        baseDir .. path .. ".lua",
+        baseDir .. path .. ".luau",
+        baseDir .. path:gsub("%.", "/"),
+        baseDir .. path:gsub("%.", "/") .. ".lua",
+        baseDir .. path:gsub("%.", "/") .. ".luau"
+    }
 
     for _, fullPath in ipairs(pathVariations) do
         local file = io.open(fullPath, "r")
@@ -69,6 +77,7 @@ function Bundler.bundle(inputCode, first, parentModule, currentPath, moduleCache
             local file
             local success ,_ = pcall(function()
                 file = io.open(currentPath .. module, "r") or io.open(currentPath .. module .. ".lua", "r") or io.open(currentPath .. module .. ".luau", "r")
+                    or io.open(currentPath .. module:gsub("%.", "/"), "r") or io.open(currentPath .. module:gsub("%.", "/") .. ".lua", "r") or io.open(currentPath .. module:gsub("%.", "/") .. ".luau", "r")
             end)
             if not success or not file then
                 return ("require\"%s\""):format(module)

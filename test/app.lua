@@ -1,4 +1,4 @@
-local hello = require"utils/hello"
+local hello = require"utils.hello"
 
 local app = {ver = 1.1}
 
