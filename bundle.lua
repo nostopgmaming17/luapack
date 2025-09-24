@@ -40,7 +40,10 @@ local function readFile(path, baseDir)
         baseDir .. path .. ".luau",
         baseDir .. path:gsub("%.", "/"),
         baseDir .. path:gsub("%.", "/") .. ".lua",
-        baseDir .. path:gsub("%.", "/") .. ".luau"
+        baseDir .. path:gsub("%.", "/") .. ".luau",
+        baseDir .. path:sub(1,1) .. path:sub(2):gsub("%.", "/"),
+        baseDir .. path:sub(1,1) .. path:sub(2):gsub("%.", "/") .. ".lua",
+        baseDir .. path:sub(1,1) .. path:sub(2):gsub("%.", "/") .. ".luau",
     }
 
     for _, fullPath in ipairs(pathVariations) do
@@ -53,6 +56,27 @@ local function readFile(path, baseDir)
     end
 
     return nil
+end
+
+local function getActualPath(path)
+    local pathVariations = {
+        path .. ".lua",
+        path .. ".luau",
+        path:gsub("%.", "/"),
+        path:gsub("%.", "/") .. ".lua",
+        path:gsub("%.", "/") .. ".luau",
+        path:sub(1,1) .. path:sub(2):gsub("%.", "/"),
+        path:sub(1,1) .. path:sub(2):gsub("%.", "/") .. ".lua",
+        path:sub(1,1) .. path:sub(2):gsub("%.", "/") .. ".luau",
+    }
+    for i = 1,#pathVariations do
+        local test = pathVariations[i]
+        local f = io.open(test, "r")
+        if f ~= nil then
+            f:close()
+            return test
+        end
+    end
 end
 
 function Bundler.bundle(inputCode, first, parentModule, currentPath, moduleCache, moduleFileCache, modulesTable, cnt,
@@ -74,18 +98,16 @@ function Bundler.bundle(inputCode, first, parentModule, currentPath, moduleCache
 
     local function transformRequires(code)
         local function replaceRequire(module)
-            local file
+            local actualpath
             local success ,_ = pcall(function()
-                file = io.open(currentPath .. module, "r") or io.open(currentPath .. module .. ".lua", "r") or io.open(currentPath .. module .. ".luau", "r")
-                    or io.open(currentPath .. module:gsub("%.", "/"), "r") or io.open(currentPath .. module:gsub("%.", "/") .. ".lua", "r") or io.open(currentPath .. module:gsub("%.", "/") .. ".luau", "r")
+                actualpath = getActualPath(currentPath .. module)
             end)
-            if not success or not file then
+            if not success or not actualpath then
                 return ("require\"%s\""):format(module)
             end
-            file:close()
-            local varName = moduleCache[module] or cnt
-            if not moduleCache[module] then
-                moduleCache[module] = cnt
+            local varName = moduleCache[actualpath] or cnt
+            if not moduleCache[actualpath] then
+                moduleCache[actualpath] = cnt
                 cnt = cnt + 1
             end
 
