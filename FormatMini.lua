@@ -53,7 +53,7 @@ local function Format_Mini(ast)
         elseif aa == '' then
             return a .. b
         else
-            if bb == '(' then
+            if bb == '(' and not Symbols[aa] then
                 -- don't want to accidentally call last statement, can't join directly
                 return a .. sep .. b
             else
