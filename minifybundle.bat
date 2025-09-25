@@ -1,5 +1,5 @@
 @echo off
-if not exist "out/" (
-    mkdir out
+if not exist "dist/" (
+    mkdir dist
 )
-lua bundle.lua bundle.lua -o out/bundle.lua -d BUNDLED=true
+lua bundle.lua bundle.lua -o dist/bundle.lua -d BUNDLED=true
