@@ -2,8 +2,7 @@
 -- MangleTableProperties.lua
 --
 -- This module provides a function that takes a Lua AST, mangles all
--- table property names, and returns the modified AST.
--- It correctly handles ASTs with circular references to prevent stack overflows.
+-- table property names using a specific character set, and returns the modified AST.
 --
 
 local Mangle = {}
@@ -18,7 +17,6 @@ local visitor = {}
 --
 function Mangle.traverse(node, context)
     -- VITAL FIX: Prevent infinite recursion from circular references in the AST.
-    -- If the node is not a table or if we have already visited it, stop.
     if type(node) ~= 'table' or context.visited[node] then
         return
     end
@@ -32,7 +30,6 @@ function Mangle.traverse(node, context)
     end
 
     -- 2. Recursively traverse the children of the current node.
-    -- The pairs() iterator will correctly find all child nodes.
     for key, child in pairs(node) do
         Mangle.traverse(child, context)
     end
@@ -58,7 +55,6 @@ function visitor.ConstructorExpr(node, context)
         if entry.Type == 'KeyString' then
             local originalName = entry.Key
             entry.Key = context.getMangledName(originalName)
-
         -- Handles cases like `{ ["my_prop"] = value }`
         elseif entry.Type == 'Key' and entry.Key.AstType == 'StringExpr' then
             context.mangleStringNode(entry.Key)
@@ -83,26 +79,45 @@ end
 -- @param ast The Abstract Syntax Tree to be processed.
 -- @return The modified Abstract Syntax Tree.
 --
-local function processAstAndMangleProperties(ast, auto)
+local function processAstAndMangleProperties(ast)
+    -- Character sets for name generation
+    local chars_first = "aAbBcCdDeEfFgGhHiIjJkKlLmMnNoOpPqQrRsStTuUvVwWxXyYzZ_"
+    local chars_all = chars_first .. "0123456789"
+    local base_first = #chars_first
+    local base_all = #chars_all
+
     local context = {
         nameMap = {},
         nextNameId = 0,
-        -- The 'visited' table is crucial for preventing stack overflows.
-        -- Using a weak table for keys means it won't prevent garbage collection.
         visited = setmetatable({}, {__mode = "k"}),
     }
 
     ---
-    -- Generates the next mangled name in the sequence (a, b, ..., z, aa, ab, ...).
+    -- Generates the next mangled name based on the specified character rules.
     --
     function context.generateNextName()
         local n = context.nextNameId
-        local name = ""
-        repeat
-            name = string.char(string.byte('a') + (n % 26)) .. name
-            n = math.floor(n / 26) - 1
-        until n < 0
         context.nextNameId = context.nextNameId + 1
+
+        if n < base_first then
+            -- For the first 53 names, just return the character directly.
+            return chars_first:sub(n + 1, n + 1)
+        end
+        
+        -- For names beyond the first 53
+        local name = ""
+        -- 1. Determine the first character
+        local first_char_index = n % base_first
+        name = chars_first:sub(first_char_index + 1, first_char_index + 1)
+        n = math.floor(n / base_first)
+        
+        -- 2. Determine subsequent characters
+        while n > 0 do
+            local remainder = (n - 1) % base_all
+            name = name .. chars_all:sub(remainder + 1, remainder + 1)
+            n = math.floor((n - 1) / base_all)
+        end
+        
         return name
     end
 
@@ -110,9 +125,6 @@ local function processAstAndMangleProperties(ast, auto)
     -- Gets an existing mangled name or creates a new one for an original property name.
     --
     function context.getMangledName(originalName)
-        if originalName:sub(1,2) == "__" then return originalName end
-        if not auto and originalName:sub(1,1) ~= "_" then return originalName end
-        if auto and originalName:sub(1,1) == "_" then return originalName:sub(2) end
         if not context.nameMap[originalName] then
             context.nameMap[originalName] = context.generateNextName()
         end
@@ -128,11 +140,11 @@ local function processAstAndMangleProperties(ast, auto)
 
         if quoteChar == "'" or quoteChar == '"' then
             local originalName = fullStringLiteral:sub(2, -2)
-            local newName = context.getMangledName(originalName)
-            stringNode.Value.Data = quoteChar .. newName .. quoteChar
-            
-            -- Also mark the string node's value table as visited, since it's part of the AST
-            context.visited[stringNode.Value] = true
+            if originalName ~= "" then
+                local newName = context.getMangledName(originalName)
+                stringNode.Value.Data = quoteChar .. newName .. quoteChar
+                context.visited[stringNode.Value] = true
+            end
         end
     end
 
