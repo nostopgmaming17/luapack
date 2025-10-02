@@ -110,6 +110,7 @@ local function processAstAndMangleProperties(ast, auto)
     -- Gets an existing mangled name or creates a new one for an original property name.
     --
     function context.getMangledName(originalName)
+        if originalName:sub(1,2) == "__" then return originalName end
         if not auto and originalName:sub(1,1) ~= "_" then return originalName end
         if auto and originalName:sub(1,1) == "_" then return originalName:sub(2) end
         if not context.nameMap[originalName] then
