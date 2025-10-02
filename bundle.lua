@@ -3,6 +3,7 @@
 local Parser = require "ParseLua"
 local Format_Mini = require "FormatMini"
 local ParseLua = Parser.ParseLua
+local Mangle = require "Mangle"
 
 local Bundler = {}
 
@@ -194,11 +195,14 @@ function Bundler.removeComments(code)
     return code
 end
 
-function Bundler.minifyLua(code)
+function Bundler.minifyLua(code, mangle)
     local st, ast = ParseLua(code)
     if not st then
         error(ast)
         return
+    end
+    if mangle ~= nil and mangle ~= "none" then
+        ast = Mangle(ast, mangle == "auto")
     end
     return Format_Mini(ast)
 end
@@ -213,7 +217,7 @@ function Bundler.writeFile(path, content)
     return true
 end
 
-function Bundler.main(inputFile, outputFile, define)
+function Bundler.main(inputFile, outputFile, define, mangle)
     inputFile = inputFile or "main.lua"
     outputFile = outputFile or "bundled.min.lua"
 
@@ -230,7 +234,7 @@ function Bundler.main(inputFile, outputFile, define)
     local bundledCode = Bundler.bundle(inputCode, true, nil, getDirectory(inputPath), nil, nil, nil, nil, define)
 
     -- Minify the bundled code
-    local minifiedCode = Bundler.minifyLua(bundledCode)
+    local minifiedCode = Bundler.minifyLua(bundledCode, mangle)
 
     -- Write bundled and minified code
     if Bundler.writeFile(outputFile, minifiedCode) then
@@ -266,6 +270,7 @@ end
 local output = fname .. ".min.lua"
 
 local define = {}
+local mangle = "none"
 
 for i = 2, #args - 1 do
     if args[i]:lower() == "-o" then
@@ -276,7 +281,11 @@ for i = 2, #args - 1 do
         if type(var) == "string" and type(val) == "string" then
             define[var] = val
         end
+    elseif args[i]:lower() == "-mangle" then
+        mangle = "mangle"
+    elseif args[i]:lower() == "-automangle" then
+        mangle = "auto"
     end
 end
 
-Bundler.main(entrypoint, output, define)
+Bundler.main(entrypoint, output, define, mangle)
