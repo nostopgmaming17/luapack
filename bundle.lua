@@ -272,7 +272,7 @@ local output = fname .. ".min.lua"
 local define = {}
 local mangle = "none"
 
-for i = 2, #args - 1 do
+for i = 2, #args do
     if args[i]:lower() == "-o" then
         output = args[i + 1]
         i = i + 1
