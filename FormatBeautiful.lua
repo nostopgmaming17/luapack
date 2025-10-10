@@ -20,7 +20,7 @@ local Digits = lookupify{'0', '1', '2', '3', '4', '5', '6', '7', '8', '9'}
 local function Format_Beautify(ast)
 	local formatStatlist, formatExpr
 	local indent = 0
-	local EOL = ";"
+	local EOL = "\n"
 	
 	local function getIndentation()
 		return string.rep("    ", indent)
@@ -182,7 +182,7 @@ local function Format_Beautify(ast)
 					end
 				end
 			end
-		elseif statement.AstType == 'SpecialAssignemntStatement' then
+		elseif statement.AstType == 'SpecialAssignmentStatement' then
 			out = getIndentation()
 			out = out .. formatExpr(statement.Lhs)
             out = out .. statement.Operator
@@ -344,7 +344,7 @@ local function Format_Beautify(ast)
 
 	formatStatlist = function(statList)
 		local out = ''
-		for _, stat in pairs(statList.Body) do
+		for _, stat in ipairs(statList.Body) do
 			out = joinStatementsSafe(out, formatStatement(stat) .. EOL)
 		end
 		return out
